@@ -150,14 +150,26 @@ ASTNode *ParseStatement(FILE *file) {
                 assignmentNode->right = rightNode;
 
                 int rightNodeResult = EvaluateNodesInt(rightNode);
-                printf("%d\n", rightNodeResult);
-                SetIntVar(nextToken.value, rightNodeResult);
+
+                Token semi = PeekToken(file);
+                if (semi.type == SemiColonToken) {
+                    ConsumeToken(file);
+                } else {
+                    printf("Syntax Error Semi Colon Expected\n");
+                }
 
                 return assignmentNode;
             }
         }
     }
-    return ParseExpression(file, 0);
+    ASTNode *exprNode = ParseExpression(file, 0);
+    Token semi = PeekToken(file);
+    if (semi.type == SemiColonToken) {
+        ConsumeToken(file);
+    } else {
+        printf("Syntax Error: Semi-Colon expected\n");
+    }
+    return exprNode;
 }
 ASTNode *Parse(FILE *file) {
     hasLookAhead = false;
@@ -170,7 +182,7 @@ ASTNode *Parse(FILE *file) {
         if (t.type == EOFToken) {
             break;
         }
-
+        printf("LEXER DEBUG: Type = %d, Value = '%s'\n", t.type, t.value);
         ASTNode *currentLine = ParseStatement(file);
 
         if (currentLine != NULL) {

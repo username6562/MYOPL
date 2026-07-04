@@ -49,6 +49,9 @@ Token Tokenize(char string[MAXTOKENLEN]) {
     } else if (strcmp(t.value, ")") == 0) {
         t.type = CloseParenthesis;
         expectingIdentifier = false;
+    } else if (strcmp(t.value, ";") == 0) {
+        t.type = SemiColonToken;
+        expectingIdentifier = false;
     } else {
         t.type = IdentifierToken;
     }
@@ -85,7 +88,7 @@ Token GetToken(FILE *file) {
             ungetc(ch, file);
             return Tokenize(lexerBuffer);
         } else if (ch == '+' || ch == '=' || ch == '(' || ch == ')' ||
-                   ch == '-') {
+                   ch == '-' || ch == ';') {
             lexerBuffer[0] = ch;
             lexerBuffer[1] = '\0';
             ch = fgetc(file);

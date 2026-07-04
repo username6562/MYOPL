@@ -12,7 +12,8 @@ typedef enum {
     UnknownToken,
     OpenParenthesis,
     CloseParenthesis,
-    EOFToken
+    EOFToken,
+    SemiColonToken
 } TokenType;
 
 typedef struct {
