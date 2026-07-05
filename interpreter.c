@@ -6,12 +6,50 @@
 
 #define MAX_VARIABLE_NO 1000
 
-static NumberVariable variableArray[MAX_VARIABLE_NO];
+static Variable variableArray[MAX_VARIABLE_NO];
 static int numberOfVariable = 0;
-void SetIntVar(char *name, int value) {
-    variableArray[numberOfVariable] =
-        (NumberVariable){.name = strdup(name), .value = value};
+void SetVar(Variable variable) {
+
+    for (int i = 0; i < numberOfVariable; i++) {
+        if (strcmp(variable.name, variableArray[i].name) == 0 &&
+            variable.name != NULL) {
+            if (variableArray[i].type != variable.type) {
+                printf("RunTime error cannot reassign variable to anoher type");
+                exit(1);
+            }
+            if (variableArray[i].type == String &&
+                variableArray[i].stringVal != NULL) {
+                free(variableArray[i].stringVal);
+            }
+            if (variable.type == String) {
+                variableArray[i].stringVal = strdup(variable.stringVal);
+            } else {
+                variableArray[i].intVal = variable.intVal;
+            }
+            return;
+        }
+    }
+    variableArray[numberOfVariable] = variable;
     numberOfVariable++;
+}
+
+void PrintVariableRegistry() {
+    printf("\n--- Variable Storage Registry Shelf ---\n");
+    for (int i = 0; i < numberOfVariable; i++) {
+        if (variableArray[i].name == NULL) {
+            printf("[%d]: UNINITIALIZED NULL DATA\n", i);
+            continue;
+        }
+
+        if (variableArray[i].type == Integer) {
+            printf("Name: %s | Type: int    | Value: %d\n",
+                   variableArray[i].name, variableArray[i].intVal);
+        } else if (variableArray[i].type == String) {
+            printf("Name: %s | Type: string | Value: \"%s\"\n",
+                   variableArray[i].name, variableArray[i].stringVal);
+        }
+    }
+    printf("----------------------------------------\n");
 }
 
 int EvaluateNodesInt(ASTNode *nodes) {
@@ -29,9 +67,9 @@ int EvaluateNodesInt(ASTNode *nodes) {
         return atoi(nodes->value);
     }
     if (nodes->type == IdentifierNode) {
-        int savedInt = GetIntVar(nodes->value);
+        Variable savedVal = GetVar(nodes->value);
 
-        return savedInt;
+        return savedVal.intVal;
     }
     if (nodes->type == AddNode) {
         return EvaluateNodesInt(nodes->left) + EvaluateNodesInt(nodes->right);
@@ -47,24 +85,57 @@ int EvaluateNodesInt(ASTNode *nodes) {
     }
 
     if (nodes->type == AssignmentOpNode) {
+
         char *variableName = nodes->left->value;
         ASTNode *rightNode = nodes->right;
+
+        if (rightNode->type == StringNode) {
+            EvaluateNodesChar(nodes);
+            return 0;
+        }
         int result = EvaluateNodesInt(rightNode);
         printf("REsult %d\n", result);
-        SetIntVar(variableName, result);
+        Variable variable;
+        variable.name = strdup(variableName);
+        variable.intVal = result;
+        variable.type = Integer;
+        SetVar(variable);
         return result;
     }
     return 0;
 }
 
-int GetIntVar(char *name) {
+char *EvaluateNodesChar(ASTNode *nodes) {
+    if (nodes->type == StringNode) {
+        return nodes->value;
+    }
+
+    if (nodes->type == AssignmentOpNode) {
+        char *variableName = nodes->left->value;
+        ASTNode *rightNode = nodes->right;
+
+        char *result = EvaluateNodesChar(rightNode);
+
+        Variable variable;
+
+        variable.name = variableName;
+        variable.stringVal = result;
+        variable.type = String;
+
+        SetVar(variable);
+        return result;
+    }
+
+    return NULL;
+}
+Variable GetVar(char *name) {
+
     for (int i = 0; i < numberOfVariable; i++) {
         if (variableArray[i].name != NULL &&
             strcmp(name, variableArray[i].name) == 0) {
-            return variableArray[i].value;
+            return variableArray[i];
         }
     }
     printf("Variable Name wasn't %s found  \n", name);
-
-    return 0;
+    return (Variable){0};
 }
