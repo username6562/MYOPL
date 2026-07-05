@@ -17,12 +17,17 @@ bool isInteger(char src[MAXTOKENLEN]) {
     return true;
 }
 
-Token Tokenize(char string[MAXTOKENLEN]) {
+Token Tokenize(char string[MAXTOKENLEN], bool isString) {
     Token t;
     strncpy(t.value, string, MAXTOKENLEN - 1);
     t.value[MAXTOKENLEN - 1] = '\0';
     static bool expectingIdentifier;
-    if (strcmp(t.value, "+") == 0) {
+
+    if (isString) {
+        t.type = StringToken;
+        expectingIdentifier = false;
+
+    } else if (strcmp(t.value, "+") == 0) {
         t.type = BinaryOpToken;
         expectingIdentifier = false;
     }
@@ -37,7 +42,7 @@ Token Tokenize(char string[MAXTOKENLEN]) {
     } else if (isInteger(t.value)) {
         t.type = IntToken;
         expectingIdentifier = false;
-    } else if (strcmp(t.value, "int") == 0) {
+    } else if (strcmp(t.value, "int") == 0 || strcmp(t.value, "char") == 0) {
         t.type = KeyWordToken;
         expectingIdentifier = true;
     } else if (expectingIdentifier && isalpha(t.value[0])) {
@@ -86,14 +91,14 @@ Token GetToken(FILE *file) {
 
             lexerBuffer[bufferIndex] = '\0';
             ungetc(ch, file);
-            return Tokenize(lexerBuffer);
+            return Tokenize(lexerBuffer, false);
         } else if (ch == '+' || ch == '=' || ch == '(' || ch == ')' ||
                    ch == '-' || ch == ';') {
             lexerBuffer[0] = ch;
             lexerBuffer[1] = '\0';
             ch = fgetc(file);
             ungetc(ch, file);
-            return Tokenize(lexerBuffer);
+            return Tokenize(lexerBuffer, false);
         } else if (isalpha(ch)) {
             while (isalpha(ch)) {
                 lexerBuffer[bufferIndex++] = ch;
@@ -102,13 +107,23 @@ Token GetToken(FILE *file) {
             lexerBuffer[bufferIndex] = '\0';
             ungetc(ch, file);
 
-            return Tokenize(lexerBuffer);
-        } else {
+            return Tokenize(lexerBuffer, false);
+        } else if (ch == '\'' || ch == '\"') {
+            while (ch != '\"' || ch != '\'') {
+                lexerBuffer[bufferIndex] = ch;
+                ch = fgetc(file);
+            }
+            lexerBuffer[bufferIndex] = '\0';
+            ungetc(ch, file);
+            return Tokenize(lexerBuffer, true);
+        }
+
+        else {
             lexerBuffer[0] = ch;
             lexerBuffer[1] = '\0';
             ch = fgetc(file);
             ungetc(ch, file);
-            return Tokenize(lexerBuffer);
+            return Tokenize(lexerBuffer, false);
         }
         tokenCount++;
     }

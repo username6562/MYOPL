@@ -15,11 +15,16 @@ void SetIntVar(char *name, int value) {
 }
 
 int EvaluateNodesInt(ASTNode *nodes) {
-    // if (nodes == NULL) {
-    //     NumberVariable empty = {0};
-    //     return empty;
-    // }
-    // for
+    if (nodes->type == BlockNode) {
+        int lastLineResult = 0;
+
+        for (int i = 0; i < nodes->childCount; i++) {
+            if (nodes->children[i] != NULL) {
+                lastLineResult = EvaluateNodesInt(nodes->children[i]);
+            }
+        }
+        return lastLineResult; // Returns the evaluation of the last line
+    }
     if (nodes->type == NumberNode) {
         return atoi(nodes->value);
     }
@@ -45,7 +50,7 @@ int EvaluateNodesInt(ASTNode *nodes) {
         char *variableName = nodes->left->value;
         ASTNode *rightNode = nodes->right;
         int result = EvaluateNodesInt(rightNode);
-
+        printf("REsult %d\n", result);
         SetIntVar(variableName, result);
         return result;
     }
@@ -54,8 +59,8 @@ int EvaluateNodesInt(ASTNode *nodes) {
 
 int GetIntVar(char *name) {
     for (int i = 0; i < numberOfVariable; i++) {
-        if (strcmp(name, variableArray[i].name) == 0 &&
-            variableArray[i].name != NULL) {
+        if (variableArray[i].name != NULL &&
+            strcmp(name, variableArray[i].name) == 0) {
             return variableArray[i].value;
         }
     }

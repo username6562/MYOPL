@@ -1,5 +1,4 @@
 #include "parser.h"
-#include "../interpreter.h"
 #include "ast.h"
 #include "lexer.h"
 #include <stdbool.h>
@@ -51,23 +50,6 @@ ASTNode *ParsePrimary(FILE *file) {
         ConsumeToken(file);
         return CreateNode(IdentifierNode, t.value);
     }
-    //
-    // if (t.type == IdentifierToken) {
-    //     ConsumeToken(file);
-    //     ASTNode *varLeft = CreateNode(IdentifierNode, t.value);
-    //
-    //     Token peek = PeekToken(file);
-    //     if (peek.type == EqualsToken) {
-    //         ConsumeToken(file);
-    //         ASTNode *assignmentOp = CreateNode(AssignmentOpNode, "=");
-    //
-    //         ASTNode *mathExpression = ParseExpression(file, 0);
-    //
-    //         assignmentOp->left = varLeft;
-    //         assignmentOp->right = mathExpression;
-    //         return assignmentOp;
-    //     }
-    // }
     if (t.type == EqualsToken) {
         ConsumeToken(file);
         return CreateNode(EqualsNode, t.value);
@@ -78,8 +60,13 @@ ASTNode *ParsePrimary(FILE *file) {
 
         Token peek = PeekToken(file);
         if (peek.type == CloseParenthesis) {
+            ConsumeToken(file);
             return innerExpression;
         }
+    }
+    if (t.type == StringToken) {
+        ConsumeToken(file);
+        CreateNode(StringNode, t.value);
     }
     if (t.type == UnknownToken) {
         ConsumeToken(file);
@@ -149,13 +136,11 @@ ASTNode *ParseStatement(FILE *file) {
                 assignmentNode->left = varLeft;
                 assignmentNode->right = rightNode;
 
-                int rightNodeResult = EvaluateNodesInt(rightNode);
-
                 Token semi = PeekToken(file);
                 if (semi.type == SemiColonToken) {
                     ConsumeToken(file);
                 } else {
-                    printf("Syntax Error Semi Colon Expected\n");
+                    printf("Syntax Error Semi-Colon Expected\n");
                 }
 
                 return assignmentNode;
@@ -182,7 +167,6 @@ ASTNode *Parse(FILE *file) {
         if (t.type == EOFToken) {
             break;
         }
-        printf("LEXER DEBUG: Type = %d, Value = '%s'\n", t.type, t.value);
         ASTNode *currentLine = ParseStatement(file);
 
         if (currentLine != NULL) {

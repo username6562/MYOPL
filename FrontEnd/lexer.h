@@ -1,5 +1,6 @@
 #ifndef LEXER_H
 #define LEXER_H
+#include <stdbool.h>
 #include <stdio.h>
 #define MAXTOKENLEN 256
 #define MAXTOKEN 1000
@@ -13,7 +14,8 @@ typedef enum {
     OpenParenthesis,
     CloseParenthesis,
     EOFToken,
-    SemiColonToken
+    SemiColonToken,
+    StringToken
 } TokenType;
 
 typedef struct {
@@ -22,6 +24,6 @@ typedef struct {
 
 } Token;
 
-Token Tokenize(char string[MAXTOKENLEN]);
+Token Tokenize(char string[MAXTOKENLEN], bool isString);
 Token GetToken(FILE *file);
 #endif // !LEXER_H
