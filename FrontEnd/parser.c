@@ -52,7 +52,7 @@ ASTNode *ParsePrimary(FILE *file) {
     }
     if (t.type == EqualsToken) {
         ConsumeToken(file);
-        return CreateNode(EqualsNode, t.value);
+        return CreateNode(AssignmentOpNode, t.value);
     }
     if (t.type == OpenParenthesis) {
         ConsumeToken(file);
@@ -66,11 +66,15 @@ ASTNode *ParsePrimary(FILE *file) {
     }
     if (t.type == StringToken) {
         ConsumeToken(file);
-        CreateNode(StringNode, t.value);
+        return CreateNode(StringNode, t.value);
     }
     if (t.type == UnknownToken) {
         ConsumeToken(file);
         return CreateNode(UnknownNode, t.value);
+    }
+    if (t.type == BoolToken) {
+        ConsumeToken(file);
+        return CreateNode(BoolNode, t.value);
     }
     return NULL;
 }
@@ -120,7 +124,9 @@ ASTNode *ParseExpression(FILE *file, int currentBindingPower) {
 ASTNode *ParseStatement(FILE *file) {
 
     Token token = PeekToken(file);
-    if (token.type == KeyWordToken && strcmp(token.value, "int") == 0) {
+    if (token.type == KeyWordToken && (strcmp(token.value, "int") == 0 ||
+                                       strcmp(token.value, "string") == 0) ||
+        strcmp(token.value, "bool")) {
         ConsumeToken(file);
         Token nextToken = PeekToken(file);
 
@@ -141,10 +147,32 @@ ASTNode *ParseStatement(FILE *file) {
                     ConsumeToken(file);
                 } else {
                     printf("Syntax Error Semi-Colon Expected\n");
+                    ConsumeToken(file);
                 }
 
                 return assignmentNode;
             }
+        }
+    }
+    if (token.type == IdentifierToken) {
+        ConsumeToken(file);
+        Token eqToken = PeekToken(file);
+        ASTNode *variableNode = CreateNode(IdentifierNode, token.value);
+        if (eqToken.type == EqualsToken) {
+            ConsumeToken(file);
+            ASTNode *assignmentNode = CreateNode(AssignmentOpNode, "=");
+            ASTNode *rightNode = ParseExpression(file, 0);
+
+            Token semi = PeekToken(file);
+            if (semi.type == SemiColonToken) {
+                ConsumeToken(file);
+            } else {
+                printf("Syntax Error Semi-Colon Expected\n");
+            }
+            assignmentNode->left = variableNode;
+            assignmentNode->right = rightNode;
+
+            return assignmentNode;
         }
     }
     ASTNode *exprNode = ParseExpression(file, 0);
@@ -153,6 +181,7 @@ ASTNode *ParseStatement(FILE *file) {
         ConsumeToken(file);
     } else {
         printf("Syntax Error: Semi-Colon expected\n");
+        ConsumeToken(file);
     }
     return exprNode;
 }
@@ -168,7 +197,6 @@ ASTNode *Parse(FILE *file) {
             break;
         }
         ASTNode *currentLine = ParseStatement(file);
-
         if (currentLine != NULL) {
             programRoot->children[programRoot->childCount] = currentLine;
             programRoot->childCount++;

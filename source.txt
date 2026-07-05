@@ -1,2 +1,1 @@
-int x = 8 + 2 - 65;
-int z = 9 * (5+1);
+bool value = true;

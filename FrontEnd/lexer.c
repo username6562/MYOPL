@@ -42,7 +42,8 @@ Token Tokenize(char string[MAXTOKENLEN], bool isString) {
     } else if (isInteger(t.value)) {
         t.type = IntToken;
         expectingIdentifier = false;
-    } else if (strcmp(t.value, "int") == 0 || strcmp(t.value, "char") == 0) {
+    } else if (strcmp(t.value, "int") == 0 || strcmp(t.value, "string") == 0 ||
+               strcmp(t.value, "bool") == 0) {
         t.type = KeyWordToken;
         expectingIdentifier = true;
     } else if (expectingIdentifier && isalpha(t.value[0])) {
@@ -69,7 +70,6 @@ Token GetToken(FILE *file) {
     if (file == NULL) {
         printf("Error couldn't open file\n");
     }
-    Token tokens[MAXTOKEN];
 
     int tokenCount = 0;
 
@@ -109,11 +109,17 @@ Token GetToken(FILE *file) {
 
             return Tokenize(lexerBuffer, false);
         } else if (ch == '\'' || ch == '\"') {
-            while (ch != '\"' || ch != '\'') {
-                lexerBuffer[bufferIndex] = ch;
+            char quote = ch;
+            ch = fgetc(file);
+            while (ch != quote && ch != EOF) {
+                lexerBuffer[bufferIndex++] = ch;
                 ch = fgetc(file);
             }
+
             lexerBuffer[bufferIndex] = '\0';
+            if (ch == quote) {
+                ch = fgetc(file);
+            }
             ungetc(ch, file);
             return Tokenize(lexerBuffer, true);
         }

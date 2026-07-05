@@ -14,7 +14,8 @@ void SetVar(Variable variable) {
         if (strcmp(variable.name, variableArray[i].name) == 0 &&
             variable.name != NULL) {
             if (variableArray[i].type != variable.type) {
-                printf("RunTime error cannot reassign variable to anoher type");
+                printf(
+                    "RunTime error cannot reassign variable to another type");
                 exit(1);
             }
             if (variableArray[i].type == String &&
@@ -25,6 +26,9 @@ void SetVar(Variable variable) {
                 variableArray[i].stringVal = strdup(variable.stringVal);
             } else {
                 variableArray[i].intVal = variable.intVal;
+            }
+
+            if (variable.type == Integer) {
             }
             return;
         }
@@ -47,6 +51,9 @@ void PrintVariableRegistry() {
         } else if (variableArray[i].type == String) {
             printf("Name: %s | Type: string | Value: \"%s\"\n",
                    variableArray[i].name, variableArray[i].stringVal);
+        } else if (variableArray[i].type == Boolean) {
+            printf("Name: %s | Type: bool | Value: \"%d\"\n",
+                   variableArray[i].name, variableArray[i].boolVal);
         }
     }
     printf("----------------------------------------\n");
@@ -93,6 +100,9 @@ int EvaluateNodesInt(ASTNode *nodes) {
             EvaluateNodesChar(nodes);
             return 0;
         }
+        if (rightNode->type == BoolNode) {
+            EvaluateNodesBool(nodes);
+        }
         int result = EvaluateNodesInt(rightNode);
         printf("REsult %d\n", result);
         Variable variable;
@@ -105,6 +115,32 @@ int EvaluateNodesInt(ASTNode *nodes) {
     return 0;
 }
 
+int EvaluateNodesBool(ASTNode *nodes) {
+    if (nodes->type == BoolNode) {
+        if (strcmp(nodes->value, "true")) {
+            return 1;
+        }
+        if (strcmp(nodes->value, "false")) {
+            return 0;
+        }
+    }
+
+    if (nodes->type == AssignmentOpNode) {
+        char *varName = nodes->left->value;
+        ASTNode *rightNode = nodes->right;
+
+        int result = EvaluateNodesBool(rightNode);
+
+        Variable variable;
+        variable.name = variable.name;
+        variable.boolVal = result;
+        variable.type = Boolean;
+
+        SetVar(variable);
+        return result;
+    }
+    return 0;
+}
 char *EvaluateNodesChar(ASTNode *nodes) {
     if (nodes->type == StringNode) {
         return nodes->value;
@@ -115,7 +151,7 @@ char *EvaluateNodesChar(ASTNode *nodes) {
         ASTNode *rightNode = nodes->right;
 
         char *result = EvaluateNodesChar(rightNode);
-
+        printf("Chat REsult %s \n", result);
         Variable variable;
 
         variable.name = variableName;

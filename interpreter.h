@@ -3,19 +3,23 @@
 
 #include "FrontEnd/ast.h"
 
-typedef enum { Integer, String } VariableTypes;
+typedef enum { Integer, String, Boolean } VariableTypes;
 typedef struct {
     const char *name;
     union {
         int intVal;
+        int boolVal;
         char *stringVal;
-    } VarType;
+    };
     VariableTypes type;
 } Variable;
 
+int EvaluateNodesBool(ASTNode *nodes);
 int EvaluateNodesInt(ASTNode *nodes);
+char *EvaluateNodesChar(ASTNode *nodes);
 void SetIntVar(char *name, int value);
 
-int GetIntVar(char *name);
+void PrintVariableRegistry();
+Variable GetVar(char *name);
 
 #endif // !INTERPRETER_H

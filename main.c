@@ -9,6 +9,6 @@ int main() {
     FILE *file = fopen("source.txt", "r");
     ASTNode *node = Parse(file);
     EvaluateNodesInt(node);
-
+    PrintVariableRegistry();
     fclose(file);
 }

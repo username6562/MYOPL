@@ -13,7 +13,8 @@ typedef enum {
     IntNode,
     BlockNode,
     UnknownNode,
-    StringNode
+    StringNode,
+    BoolNode
 } NodeType;
 typedef struct ASTNode ASTNode;
 
