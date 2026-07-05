@@ -2,7 +2,7 @@
 CC = gcc
 
 SRC = *.c
-OUT = game.exe
+OUT = myopl.exe
 
 CFLAGS = -Wall -std=c99
 LIBS = -lraylib -lopengl32 -lgdi32 -lwinmm
