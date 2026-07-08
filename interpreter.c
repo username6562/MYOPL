@@ -52,8 +52,8 @@ void PrintVariableRegistry() {
             printf("Name: %s | Type: string | Value: \"%s\"\n",
                    variableArray[i].name, variableArray[i].stringVal);
         } else if (variableArray[i].type == Boolean) {
-            printf("Name: %s | Type: bool | Value: \"%d\"\n",
-                   variableArray[i].name, variableArray[i].boolVal);
+            printf("Name: %s | Type: bool | Value: %d\n", variableArray[i].name,
+                   variableArray[i].boolVal);
         }
     }
     printf("----------------------------------------\n");
@@ -91,6 +91,16 @@ int EvaluateNodesInt(ASTNode *nodes) {
         return EvaluateNodesInt(nodes->left) / EvaluateNodesInt(nodes->right);
     }
 
+    if (nodes->type == IfNode) {
+        int condition = EvaluateNodesInt(nodes->left);
+
+        if (condition == 1) {
+            int result = EvaluateNodesInt(nodes->right);
+
+            return result;
+        }
+    }
+
     if (nodes->type == AssignmentOpNode) {
 
         char *variableName = nodes->left->value;
@@ -100,8 +110,11 @@ int EvaluateNodesInt(ASTNode *nodes) {
             EvaluateNodesChar(nodes);
             return 0;
         }
-        if (rightNode->type == BoolNode) {
+        if (rightNode->type == BoolNode ||
+            rightNode->type == IdentifierNode &&
+                GetVar(rightNode->value).type == Boolean) {
             EvaluateNodesBool(nodes);
+            return 0;
         }
         int result = EvaluateNodesInt(rightNode);
         printf("REsult %d\n", result);
@@ -117,10 +130,10 @@ int EvaluateNodesInt(ASTNode *nodes) {
 
 int EvaluateNodesBool(ASTNode *nodes) {
     if (nodes->type == BoolNode) {
-        if (strcmp(nodes->value, "true")) {
+        if (strcmp(nodes->value, "true") == 0) {
             return 1;
         }
-        if (strcmp(nodes->value, "false")) {
+        if (strcmp(nodes->value, "false") == 0) {
             return 0;
         }
     }
@@ -132,7 +145,7 @@ int EvaluateNodesBool(ASTNode *nodes) {
         int result = EvaluateNodesBool(rightNode);
 
         Variable variable;
-        variable.name = variable.name;
+        variable.name = varName;
         variable.boolVal = result;
         variable.type = Boolean;
 
