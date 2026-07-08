@@ -128,6 +128,12 @@ ASTNode *ParseStatement(FILE *file) {
     if (token.type == IfToken) {
         ConsumeToken(file);
         ASTNode *if_node = CreateNode(IfNode, "if");
+        ASTNode *conditionEvalNode =
+            CreateNode(BlockNode, "ConditionEvaluator");
+
+        conditionEvalNode->right = NULL;
+
+        if_node->right = conditionEvalNode;
         Token openParenToken = PeekToken(file);
         if (openParenToken.type == OpenParenthesis) {
             ConsumeToken(file);
@@ -141,7 +147,9 @@ ASTNode *ParseStatement(FILE *file) {
                 if (openCurlyTok.type == OpenCurlyBracket) {
                     ConsumeToken(file);
 
-                    ASTNode *ifInterface = CreateNode(BlockNode, "if");
+                    ASTNode *ifNode = CreateNode(BlockNode, "if");
+
+                    conditionEvalNode->left = ifNode;
 
                     while (true) {
                         Token closeParenTok = PeekToken(file);
@@ -154,9 +162,8 @@ ASTNode *ParseStatement(FILE *file) {
                         ASTNode *currentLine = ParseStatement(file);
 
                         if (currentLine != NULL) {
-                            ifInterface->children[ifInterface->childCount] =
-                                currentLine;
-                            ifInterface->childCount++;
+                            ifNode->children[ifNode->childCount] = currentLine;
+                            ifNode->childCount++;
 
                         } else {
                             ConsumeToken(file);
@@ -164,8 +171,40 @@ ASTNode *ParseStatement(FILE *file) {
                     }
                     ConsumeToken(file);
 
+                    Token checkElseToken = PeekToken(file);
+
+                    if (checkElseToken.type == ElseToken) {
+                        ConsumeToken(file);
+                        ASTNode *elseNode = CreateNode(BlockNode, "else");
+                        conditionEvalNode->right = elseNode;
+                        Token checkOpenCurly = PeekToken(file);
+
+                        if (checkOpenCurly.type == OpenCurlyBracket) {
+                            ConsumeToken(file);
+                            while (true) {
+                                Token closeParenTok = PeekToken(file);
+
+                                if (closeParenTok.type == EOFToken ||
+                                    closeParenTok.type == CloseCurlyBracket) {
+                                    break;
+                                }
+
+                                ASTNode *currentLine = ParseStatement(file);
+
+                                if (currentLine != NULL) {
+                                    elseNode->children[elseNode->childCount] =
+                                        currentLine;
+                                    elseNode->childCount++;
+
+                                } else {
+                                    ConsumeToken(file);
+                                }
+                            }
+                            ConsumeToken(file);
+                        }
+                    }
                     if_node->left = conditionNode;
-                    if_node->right = ifInterface;
+                    if_node->right = conditionEvalNode;
 
                     return if_node;
                 }
@@ -173,7 +212,6 @@ ASTNode *ParseStatement(FILE *file) {
         }
     }
 
-    // Checks if Variable is going to be initialized
     if (token.type == KeyWordToken && (strcmp(token.value, "int") == 0 ||
                                        strcmp(token.value, "string") == 0 ||
                                        strcmp(token.value, "bool") == 0)) {
