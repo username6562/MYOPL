@@ -124,9 +124,59 @@ ASTNode *ParseExpression(FILE *file, int currentBindingPower) {
 ASTNode *ParseStatement(FILE *file) {
 
     Token token = PeekToken(file);
+
+    if (token.type == IfToken) {
+        ConsumeToken(file);
+        ASTNode *if_node = CreateNode(IfNode, "if");
+        Token openParenToken = PeekToken(file);
+        if (openParenToken.type == OpenParenthesis) {
+            ConsumeToken(file);
+            ASTNode *conditionNode = ParseExpression(file, 0);
+            Token closeParenToken = PeekToken(file);
+
+            if (closeParenToken.type == CloseParenthesis) {
+                ConsumeToken(file);
+                Token openCurlyTok = PeekToken(file);
+
+                if (openCurlyTok.type == OpenCurlyBracket) {
+                    ConsumeToken(file);
+
+                    ASTNode *ifInterface = CreateNode(BlockNode, "if");
+
+                    while (true) {
+                        Token closeParenTok = PeekToken(file);
+
+                        if (closeParenTok.type == EOFToken ||
+                            closeParenTok.type == CloseCurlyBracket) {
+                            break;
+                        }
+
+                        ASTNode *currentLine = ParseStatement(file);
+
+                        if (currentLine != NULL) {
+                            ifInterface->children[ifInterface->childCount] =
+                                currentLine;
+                            ifInterface->childCount++;
+
+                        } else {
+                            ConsumeToken(file);
+                        }
+                    }
+                    ConsumeToken(file);
+
+                    if_node->left = conditionNode;
+                    if_node->right = ifInterface;
+
+                    return if_node;
+                }
+            }
+        }
+    }
+
+    // Checks if Variable is going to be initialized
     if (token.type == KeyWordToken && (strcmp(token.value, "int") == 0 ||
-                                       strcmp(token.value, "string") == 0) ||
-        strcmp(token.value, "bool")) {
+                                       strcmp(token.value, "string") == 0 ||
+                                       strcmp(token.value, "bool") == 0)) {
         ConsumeToken(file);
         Token nextToken = PeekToken(file);
 
@@ -138,6 +188,7 @@ ASTNode *ParseStatement(FILE *file) {
             if (eqToken.type == EqualsToken) {
                 ConsumeToken(file);
                 ASTNode *assignmentNode = CreateNode(AssignmentOpNode, "=");
+
                 ASTNode *rightNode = ParseExpression(file, 0);
                 assignmentNode->left = varLeft;
                 assignmentNode->right = rightNode;
@@ -154,6 +205,8 @@ ASTNode *ParseStatement(FILE *file) {
             }
         }
     }
+
+    // Checks if Variable is About To Be Reassigned
     if (token.type == IdentifierToken) {
         ConsumeToken(file);
         Token eqToken = PeekToken(file);
