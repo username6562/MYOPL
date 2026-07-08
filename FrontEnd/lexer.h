@@ -16,7 +16,10 @@ typedef enum {
     EOFToken,
     SemiColonToken,
     StringToken,
-    BoolToken
+    BoolToken,
+    IfToken,
+    OpenCurlyBracket,
+    CloseCurlyBracket,
 } TokenType;
 
 typedef struct {

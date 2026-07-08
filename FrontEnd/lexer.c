@@ -49,6 +49,13 @@ Token Tokenize(char string[MAXTOKENLEN], bool isString) {
     } else if (expectingIdentifier && isalpha(t.value[0])) {
         t.type = IdentifierToken;
         expectingIdentifier = false;
+    } else if (strcmp(t.value, "true") == 0 || strcmp(t.value, "false") == 0) {
+        t.type = BoolToken;
+        expectingIdentifier = false;
+    } else if (strcmp(t.value, "if") == 0) {
+        t.type = IfToken;
+        expectingIdentifier = false;
+
     } else if (strcmp(t.value, "(") == 0) {
         t.type = OpenParenthesis;
         expectingIdentifier = false;
@@ -58,7 +65,13 @@ Token Tokenize(char string[MAXTOKENLEN], bool isString) {
     } else if (strcmp(t.value, ";") == 0) {
         t.type = SemiColonToken;
         expectingIdentifier = false;
-    } else {
+    } else if (strcmp(t.value, "{") == 0) {
+        t.type = OpenCurlyBracket;
+    } else if (strcmp(t.value, "}") == 0) {
+        t.type = CloseCurlyBracket;
+    }
+
+    else {
         t.type = IdentifierToken;
     }
 
