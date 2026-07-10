@@ -57,10 +57,10 @@ Token Tokenize(char string[MAXTOKENLEN], bool isString) {
         expectingIdentifier = false;
 
     } else if (strcmp(t.value, "(") == 0) {
-        t.type = OpenParenthesis;
+        t.type = OpenParenthesisToken;
         expectingIdentifier = false;
     } else if (strcmp(t.value, ")") == 0) {
-        t.type = CloseParenthesis;
+        t.type = CloseParenthesisToken;
         expectingIdentifier = false;
     } else if (strcmp(t.value, ";") == 0) {
         t.type = SemiColonToken;
@@ -69,6 +69,11 @@ Token Tokenize(char string[MAXTOKENLEN], bool isString) {
         t.type = OpenCurlyBracket;
     } else if (strcmp(t.value, "}") == 0) {
         t.type = CloseCurlyBracket;
+    } else if (strcmp(t.value, "else") == 0) {
+        t.type = ElseToken;
+    } else if (strcmp(t.value, "==") == 0 || strcmp(t.value, "<") == 0 ||
+               strcmp(t.value, ">") == 0) {
+        t.type = ComparisonOpToken;
     }
 
     else {
