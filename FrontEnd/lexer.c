@@ -110,8 +110,8 @@ Token GetToken(FILE *file) {
             lexerBuffer[bufferIndex] = '\0';
             ungetc(ch, file);
             return Tokenize(lexerBuffer, false);
-        } else if (ch == '+' || ch == '=' || ch == '(' || ch == ')' ||
-                   ch == '-' || ch == ';') {
+        } else if (ch == '+' || ch == '(' || ch == ')' || ch == '-' ||
+                   ch == ';') {
             lexerBuffer[0] = ch;
             lexerBuffer[1] = '\0';
             ch = fgetc(file);
@@ -126,6 +126,22 @@ Token GetToken(FILE *file) {
             ungetc(ch, file);
 
             return Tokenize(lexerBuffer, false);
+        } else if (ch == '=') {
+            int nextCh = fgetc(file);
+
+            if (nextCh == '=') {
+                Token tok;
+                tok.type = ComparisonOpToken;
+                strcpy(tok.value, "==");
+
+                return tok;
+            } else {
+                ungetc(nextCh, file);
+                Token tok;
+
+                tok.type = EqualsToken;
+                strcpy(tok.value, "=");
+            }
         } else if (ch == '\'' || ch == '\"') {
             char quote = ch;
             ch = fgetc(file);
@@ -151,6 +167,7 @@ Token GetToken(FILE *file) {
         }
         tokenCount++;
     }
+
     Token eofToken;
     eofToken.type = EOFToken;
     eofToken.value[0] = '\0';
