@@ -93,6 +93,7 @@ ASTNode *ParseExpression(FILE *file, int currentBindingPower) {
     }
     while (true) {
         Token nextToken = PeekToken(file);
+        // nextToken.type);
         int nextBindingPower = GetBindingPower(nextToken);
 
         if (currentBindingPower >= nextBindingPower) {
@@ -118,6 +119,10 @@ ASTNode *ParseExpression(FILE *file, int currentBindingPower) {
                 opType = GreaterThanNode;
             } else if (strcmp(nextToken.value, "==") == 0) {
                 opType = EqualsToNode;
+            } else if (strcmp(nextToken.value, "<=") == 0) {
+                opType = LessThanOrEqualsNode;
+            } else if (strcmp(nextToken.value, ">=") == 0) {
+                opType = GreaterThanOrEqualsNode;
             }
         } else {
             // printf("Could not find expected operator\n");
@@ -257,7 +262,6 @@ ASTNode *ParseStatement(FILE *file) {
         }
     }
 
-    // Checks if Variable is About To Be Reassigned
     if (token.type == IdentifierToken) {
         ConsumeToken(file);
         Token eqToken = PeekToken(file);
@@ -285,6 +289,7 @@ ASTNode *ParseStatement(FILE *file) {
         ConsumeToken(file);
     } else {
         printf("Syntax Error: SemiColon expected\n");
+        ConsumeToken(file);
     }
     return exprNode;
 }
