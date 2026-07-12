@@ -72,7 +72,8 @@ Token Tokenize(char string[MAXTOKENLEN], bool isString) {
     } else if (strcmp(t.value, "else") == 0) {
         t.type = ElseToken;
     } else if (strcmp(t.value, "==") == 0 || strcmp(t.value, "<") == 0 ||
-               strcmp(t.value, ">") == 0) {
+               strcmp(t.value, ">") == 0 || strcmp(t.value, "<=") == 0 ||
+               strcmp(t.value, ">=") == 0) {
         t.type = ComparisonOpToken;
     }
 
@@ -144,7 +145,10 @@ Token GetToken(FILE *file) {
 
                 return tok;
             }
-        } else if (ch == '\'' || ch == '\"') {
+
+        }
+
+        else if (ch == '\'' || ch == '\"') {
             char quote = ch;
             ch = fgetc(file);
             while (ch != quote && ch != EOF) {
