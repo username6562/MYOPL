@@ -8,31 +8,35 @@
 
 static Variable variableArray[MAX_VARIABLE_NO];
 static int numberOfVariable = 0;
-void SetVar(Variable variable) {
 
+void SetVar(Variable variable) {
     for (int i = 0; i < numberOfVariable; i++) {
         if (strcmp(variable.name, variableArray[i].name) == 0 &&
             variable.name != NULL) {
+
             if (variableArray[i].type != variable.type) {
                 printf(
-                    "RunTime error cannot reassign variable to another type");
+                    "RunTime error cannot reassign variable to another type\n");
                 exit(1);
             }
+
             if (variableArray[i].type == String &&
                 variableArray[i].stringVal != NULL) {
                 free(variableArray[i].stringVal);
             }
+
             if (variable.type == String) {
                 variableArray[i].stringVal = strdup(variable.stringVal);
+            } else if (variable.type == Boolean) {
+                variableArray[i].boolVal = variable.boolVal;
             } else {
                 variableArray[i].intVal = variable.intVal;
             }
 
-            if (variable.type == Integer) {
-            }
             return;
         }
     }
+
     variableArray[numberOfVariable] = variable;
     numberOfVariable++;
 }
@@ -75,7 +79,9 @@ int EvaluateNodesInt(ASTNode *nodes) {
     }
     if (nodes->type == IdentifierNode) {
         Variable savedVal = GetVar(nodes->value);
-
+        if (savedVal.type == Boolean) {
+            return savedVal.boolVal;
+        }
         return savedVal.intVal;
     }
     if (nodes->type == AddNode) {
@@ -91,8 +97,8 @@ int EvaluateNodesInt(ASTNode *nodes) {
         return EvaluateNodesInt(nodes->left) / EvaluateNodesInt(nodes->right);
     }
     if (nodes->type == GreaterThanNode || nodes->type == LessThanNode ||
-        nodes->type == EqualsToNode) {
-        printf("%d\n", EvaluateNodesComp(nodes));
+        nodes->type == EqualsToNode || nodes->type == LessThanOrEqualsNode ||
+        nodes->type == GreaterThanOrEqualsNode) {
         return EvaluateNodesComp(nodes);
     }
 
@@ -116,27 +122,37 @@ int EvaluateNodesInt(ASTNode *nodes) {
         char *variableName = nodes->left->value;
         ASTNode *rightNode = nodes->right;
 
+        Variable variable;
+        variable.name = variableName;
+        variable.name = strdup(variableName);
+
         if (rightNode->type == StringNode) {
-            EvaluateNodesChar(nodes);
+            variable.stringVal = EvaluateNodesChar(rightNode);
+            variable.type = String;
             return 0;
-        }
-        if (rightNode->type == BoolNode ||
-            (rightNode->type == IdentifierNode &&
-             GetVar(rightNode->value).type == Boolean) ||
-            rightNode->type == GreaterThanNode ||
-            rightNode->type == LessThanNode ||
-            rightNode->type == EqualsToNode) {
-            return EvaluateNodesBool(nodes);
+        } else if (rightNode->type == BoolNode ||
+                   (rightNode->type == IdentifierNode &&
+                    GetVar(rightNode->value).type == Boolean) ||
+                   rightNode->type == GreaterThanNode ||
+                   rightNode->type == LessThanNode ||
+                   rightNode->type == EqualsToNode ||
+                   rightNode->type == LessThanOrEqualsNode ||
+                   rightNode->type == GreaterThanOrEqualsNode) {
+            variable.boolVal = EvaluateNodesBool(rightNode);
+            variable.type = Boolean;
+        } else {
+            variable.intVal = EvaluateNodesInt(rightNode);
+            variable.type = Integer;
         }
 
-        int result = EvaluateNodesInt(rightNode);
-        printf("REsult %d\n", result);
-        Variable variable;
-        variable.name = strdup(variableName);
-        variable.intVal = result;
-        variable.type = Integer;
         SetVar(variable);
-        return result;
+        if (variable.type == Integer) {
+            return variable.intVal;
+        } else if (variable.type == Boolean) {
+            return variable.boolVal;
+        } else {
+            return 0;
+        }
     }
     return 0;
 }
@@ -151,7 +167,8 @@ int EvaluateNodesBool(ASTNode *nodes) {
         }
     }
     if (nodes->type == GreaterThanNode || nodes->type == LessThanNode ||
-        nodes->type == EqualsToNode) {
+        nodes->type == EqualsToNode || nodes->type == LessThanOrEqualsNode ||
+        nodes->type == GreaterThanOrEqualsNode) {
         return EvaluateNodesComp(nodes);
     }
 
@@ -217,6 +234,18 @@ int EvaluateNodesComp(ASTNode *nodes) {
             int rightSide = EvaluateNodesInt(nodes->right);
 
             return leftSide == rightSide;
+        }
+        if (nodes->type == LessThanOrEqualsNode) {
+            int leftSide = EvaluateNodesInt(nodes->left);
+            int rightSide = EvaluateNodesInt(nodes->right);
+
+            return leftSide <= rightSide;
+        }
+        if (nodes->type == GreaterThanOrEqualsNode) {
+            int leftSide = EvaluateNodesInt(nodes->left);
+            int rightSide = EvaluateNodesInt(nodes->right);
+
+            return leftSide >= rightSide;
         }
         return 0;
     }
