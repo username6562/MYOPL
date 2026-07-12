@@ -141,6 +141,8 @@ Token GetToken(FILE *file) {
 
                 tok.type = EqualsToken;
                 strcpy(tok.value, "=");
+
+                return tok;
             }
         } else if (ch == '\'' || ch == '\"') {
             char quote = ch;
