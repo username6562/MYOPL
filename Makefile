@@ -1,15 +1,14 @@
 # Source files
-SHELL := C:/msys64/usr/bin/bash.exe
 CC = gcc
 
 SRC = *.c FrontEnd/*.c
 OUT = myopl.exe
 
-CFLAGS = -Wall -std=c99
+CFLAGS = -Wall -Wextra -std=c99 
 LIBS = -lraylib -lopengl32 -lgdi32 -lwinmm
 all: build run
 build:
-	$(CC)   $(SRC)  -o $(OUT) 
+	$(CC) $(CFLAGS)  $(SRC)  -o $(OUT) 
 
 run:
 	./$(OUT)
