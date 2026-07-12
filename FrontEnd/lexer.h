@@ -11,21 +11,22 @@ typedef enum {
     KeyWordToken,
     IdentifierToken,
     UnknownToken,
-    OpenParenthesis,
-    CloseParenthesis,
+    OpenParenthesisToken,
+    CloseParenthesisToken,
     EOFToken,
     SemiColonToken,
     StringToken,
     BoolToken,
     IfToken,
+    ElseToken,
     OpenCurlyBracket,
     CloseCurlyBracket,
+    ComparisonOpToken
 } TokenType;
 
 typedef struct {
     char value[MAXTOKENLEN];
     TokenType type;
-
 } Token;
 
 Token Tokenize(char string[MAXTOKENLEN], bool isString);

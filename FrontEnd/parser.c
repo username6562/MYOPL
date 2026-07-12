@@ -8,6 +8,7 @@
 static Token token;
 static bool hasLookAhead;
 ASTNode *ParseExpression(FILE *file, int currentBindingPower);
+
 Token PeekToken(FILE *file) {
     if (hasLookAhead == false) {
         token = GetToken(file);
@@ -29,6 +30,8 @@ int GetBindingPower(Token token) {
         return 0;
     } else if (token.type == EqualsToken) {
         return 10;
+    } else if (token.type == ComparisonOpToken) {
+        return 15;
     } else if (token.type == BinaryOpToken) {
         if (strcmp(token.value, "+") == 0 || strcmp(token.value, "-") == 0) {
             return 20;
@@ -54,12 +57,12 @@ ASTNode *ParsePrimary(FILE *file) {
         ConsumeToken(file);
         return CreateNode(AssignmentOpNode, t.value);
     }
-    if (t.type == OpenParenthesis) {
+    if (t.type == OpenParenthesisToken) {
         ConsumeToken(file);
         ASTNode *innerExpression = ParseExpression(file, 0);
 
         Token peek = PeekToken(file);
-        if (peek.type == CloseParenthesis) {
+        if (peek.type == CloseParenthesisToken) {
             ConsumeToken(file);
             return innerExpression;
         }
@@ -98,7 +101,8 @@ ASTNode *ParseExpression(FILE *file, int currentBindingPower) {
 
         NodeType opType;
 
-        if (nextToken.type == BinaryOpToken) {
+        if (nextToken.type == BinaryOpToken ||
+            nextToken.type == ComparisonOpToken) {
             ConsumeToken(file);
             if (strcmp(nextToken.value, "+") == 0) {
                 opType = AddNode;
@@ -108,16 +112,25 @@ ASTNode *ParseExpression(FILE *file, int currentBindingPower) {
                 opType = MultiplyNode;
             } else if (strcmp(nextToken.value, "/") == 0) {
                 opType = DivideNode;
-            } else {
-                break;
+            } else if (strcmp(nextToken.value, "<") == 0) {
+                opType = LessThanNode;
+            } else if (strcmp(nextToken.value, ">") == 0) {
+                opType = GreaterThanNode;
+            } else if (strcmp(nextToken.value, "==") == 0) {
+                opType = EqualsToNode;
             }
-            ASTNode *opNode = CreateNode(opType, nextToken.value);
-            opNode->left = left;
-
-            opNode->right = ParseExpression(file, nextBindingPower);
-            left = opNode;
+        } else {
+            // printf("Could not find expected operator\n");
+            break;
         }
+
+        ASTNode *opNode = CreateNode(opType, nextToken.value);
+        opNode->left = left;
+
+        opNode->right = ParseExpression(file, nextBindingPower);
+        left = opNode;
     }
+
     return left;
 }
 
@@ -135,12 +148,12 @@ ASTNode *ParseStatement(FILE *file) {
 
         if_node->right = conditionEvalNode;
         Token openParenToken = PeekToken(file);
-        if (openParenToken.type == OpenParenthesis) {
+        if (openParenToken.type == OpenParenthesisToken) {
             ConsumeToken(file);
             ASTNode *conditionNode = ParseExpression(file, 0);
             Token closeParenToken = PeekToken(file);
 
-            if (closeParenToken.type == CloseParenthesis) {
+            if (closeParenToken.type == CloseParenthesisToken) {
                 ConsumeToken(file);
                 Token openCurlyTok = PeekToken(file);
 
@@ -271,8 +284,7 @@ ASTNode *ParseStatement(FILE *file) {
     if (semi.type == SemiColonToken) {
         ConsumeToken(file);
     } else {
-        printf("Syntax Error: Semi-Colon expected\n");
-        ConsumeToken(file);
+        printf("Syntax Error: SemiColon expected\n");
     }
     return exprNode;
 }
@@ -283,6 +295,7 @@ ASTNode *Parse(FILE *file) {
 
     while (true) {
         Token t = PeekToken(file);
+        // printf("Token name %s , Token type %d\n", t.value, t.type);
         // 3. Stop signal: If we hit the absolute end of the file, break!
         if (t.type == EOFToken) {
             break;

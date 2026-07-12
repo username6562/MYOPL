@@ -90,12 +90,22 @@ int EvaluateNodesInt(ASTNode *nodes) {
     if (nodes->type == DivideNode) {
         return EvaluateNodesInt(nodes->left) / EvaluateNodesInt(nodes->right);
     }
+    if (nodes->type == GreaterThanNode || nodes->type == LessThanNode ||
+        nodes->type == EqualsToNode) {
+        printf("%d\n", EvaluateNodesComp(nodes));
+        return EvaluateNodesComp(nodes);
+    }
 
     if (nodes->type == IfNode) {
         int condition = EvaluateNodesInt(nodes->left);
 
+        ASTNode *conditionEval = nodes->right;
         if (condition == 1) {
-            int result = EvaluateNodesInt(nodes->right);
+            int result = EvaluateNodesInt(conditionEval->left);
+
+            return result;
+        } else {
+            int result = EvaluateNodesInt(conditionEval->right);
 
             return result;
         }
@@ -111,11 +121,14 @@ int EvaluateNodesInt(ASTNode *nodes) {
             return 0;
         }
         if (rightNode->type == BoolNode ||
-            rightNode->type == IdentifierNode &&
-                GetVar(rightNode->value).type == Boolean) {
-            EvaluateNodesBool(nodes);
-            return 0;
+            (rightNode->type == IdentifierNode &&
+             GetVar(rightNode->value).type == Boolean) ||
+            rightNode->type == GreaterThanNode ||
+            rightNode->type == LessThanNode ||
+            rightNode->type == EqualsToNode) {
+            return EvaluateNodesBool(nodes);
         }
+
         int result = EvaluateNodesInt(rightNode);
         printf("REsult %d\n", result);
         Variable variable;
@@ -136,6 +149,10 @@ int EvaluateNodesBool(ASTNode *nodes) {
         if (strcmp(nodes->value, "false") == 0) {
             return 0;
         }
+    }
+    if (nodes->type == GreaterThanNode || nodes->type == LessThanNode ||
+        nodes->type == EqualsToNode) {
+        return EvaluateNodesComp(nodes);
     }
 
     if (nodes->type == AssignmentOpNode) {
@@ -162,11 +179,9 @@ char *EvaluateNodesChar(ASTNode *nodes) {
     if (nodes->type == AssignmentOpNode) {
         char *variableName = nodes->left->value;
         ASTNode *rightNode = nodes->right;
-
         char *result = EvaluateNodesChar(rightNode);
         printf("Chat REsult %s \n", result);
         Variable variable;
-
         variable.name = variableName;
         variable.stringVal = result;
         variable.type = String;
@@ -176,6 +191,35 @@ char *EvaluateNodesChar(ASTNode *nodes) {
     }
 
     return NULL;
+}
+
+int EvaluateNodesComp(ASTNode *nodes) {
+    {
+        if (nodes->type == NumberNode) {
+            int number = atoi(nodes->value);
+            return number;
+        }
+
+        if (nodes->type == GreaterThanNode) {
+            int leftSide = EvaluateNodesInt(nodes->left);
+            int rightSide = EvaluateNodesInt(nodes->right);
+
+            return leftSide > rightSide;
+        }
+        if (nodes->type == LessThanNode) {
+            int leftSide = EvaluateNodesInt(nodes->left);
+            int rightSide = EvaluateNodesInt(nodes->right);
+
+            return leftSide < rightSide;
+        }
+        if (nodes->type == EqualsToNode) {
+            int leftSide = EvaluateNodesInt(nodes->left);
+            int rightSide = EvaluateNodesInt(nodes->right);
+
+            return leftSide == rightSide;
+        }
+        return 0;
+    }
 }
 Variable GetVar(char *name) {
 

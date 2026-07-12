@@ -10,5 +10,6 @@ int main() {
     ASTNode *node = Parse(file);
     EvaluateNodesInt(node);
     PrintVariableRegistry();
+    // PrintAST(node);
     fclose(file);
 }

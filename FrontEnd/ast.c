@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CANVAS_ROWS 20
-#define CANVAS_COLS 80
+#define CANVAS_ROWS 35
+#define CANVAS_COLS 120
 
 ASTNode *CreateNode(NodeType type, const char value[256]) {
     ASTNode *node = malloc(sizeof(ASTNode));
@@ -29,63 +29,126 @@ ASTNode *CreateNode(NodeType type, const char value[256]) {
     return node;
 }
 
-// 🔍 Complete 2D Plotting Engine
 static void DrawNodesOnCanvas(ASTNode *node,
                               char canvas[CANVAS_ROWS][CANVAS_COLS], int row,
-                              int col, int spacing) {
+                              int col, int spacing, const char *overrideTxt) {
     if (node == NULL || row >= CANVAS_ROWS || col < 0 || col >= CANVAS_COLS)
         return;
 
-    // 1. Format the node value string to print inside map cells
-    char txt[16] = "";
-    if (node->type == IfNode)
-        strcpy(txt, "if");
-    else if (node->type == AssignmentOpNode)
-        strcpy(txt, "=");
-    else if (node->type == AddNode)
-        strcpy(txt, "+");
-    else if (node->type == SubtractNode)
-        strcpy(txt, "-");
-    else if (node->type == MultiplyNode)
-        strcpy(txt, "*");
-    else if (node->type == DivideNode)
-        strcpy(txt, "/");
-    else
-        strncpy(txt, node->value, 15);
+    // 1. FORMAT VALUES INTO EXPLICIT GEOMETRIC BOX FRAMES
+    char txt[64] = "";
+    if (overrideTxt != NULL) {
+        strcpy(txt, overrideTxt); // 🌟 FORCE CUSTOM LABELS ([ true ] / [ false
+                                  // ]) WHEN PASSED!
+    } else if (node->type == IfNode) {
+        strcpy(txt, "[ if ]");
+    } else if (node->type == AssignmentOpNode) {
+        strcpy(txt, "[ = ]");
+    } else if (node->type == AddNode || node->type == SubtractNode ||
+               node->type == MultiplyNode || node->type == DivideNode) {
+        snprintf(txt, sizeof(txt), "[ %s ]", node->value);
+    } else if (node->type == NumberNode) {
+        snprintf(txt, sizeof(txt), "( %s )", node->value);
+    } else if (node->type == IdentifierNode) {
+        snprintf(txt, sizeof(txt), "[ %s ]", node->value);
+    } else if (node->type == BoolNode) {
+        snprintf(txt, sizeof(txt), "( %s )", node->value);
+    } else if (node->type == BlockNode) {
+        snprintf(txt, sizeof(txt), "[ Helper: %s ]", node->value);
+    } else {
+        snprintf(txt, sizeof(txt), "[ %s ]", node->value);
+    }
 
     int len = strlen(txt);
     int startCol = col - (len / 2);
 
-    // Write text directly into the canvas row matrix
+    // Copy characters directly into active row coordinates
     for (int i = 0; i < len; i++) {
         if (startCol + i >= 0 && startCol + i < CANVAS_COLS) {
             canvas[row][startCol + i] = txt[i];
         }
     }
 
-    // 2. Setup left and right branch paths cleanly
+    // 2. DEFINE DEEP CODE PATH BRANCH LANES
     ASTNode *leftArm = node->left;
     ASTNode *rightArm = node->right;
 
-    // 🌟 THE FIX: If this is an 'if' node, skip the BlockNode wrapper
-    // and jump straight to the real statement line sitting inside index 0!
+    // 🌟 SECTOR A: Master IfNode parent coordinate splitter
     if (node->type == IfNode && rightArm != NULL &&
-        rightArm->type == BlockNode) {
-        if (rightArm->childCount > 0) {
-            rightArm = rightArm->children[0];
-        } else {
-            rightArm = NULL; // Block is empty, print nothing on right
+        strcmp(rightArm->value, "ConditionEvaluator") == 0) {
+
+        // Draw Left branch condition expression under standard slash marker
+        if (leftArm != NULL) {
+            int slashCol = col - (spacing / 2);
+            if (slashCol >= 0 && slashCol < CANVAS_COLS)
+                canvas[row + 1][slashCol] = '/';
+            DrawNodesOnCanvas(leftArm, canvas, row + 2, col - spacing,
+                              (spacing / 2 == 0) ? 1 : spacing / 2, NULL);
         }
+
+        // Draw Right branch helper block node straight under backslash marker
+        if (rightArm != NULL) {
+            int backslashCol = col + (spacing / 2);
+            if (backslashCol >= 0 && backslashCol < CANVAS_COLS)
+                canvas[row + 1][backslashCol] = '\\';
+            DrawNodesOnCanvas(rightArm, canvas, row + 2, col + spacing,
+                              (spacing / 2 == 0) ? 1 : spacing / 2, NULL);
+        }
+        return; // Exit early since our custom parent structural split is
+                // handled
     }
 
-    // 3. Draw diagonal connection branch lines
+    // 🌟 SECTOR B: Specialized ConditionEvaluator split block router (REPLACES
+    // [ = ] WITH [ true ] / [ false ])
+    if (node->type == BlockNode &&
+        strcmp(node->value, "ConditionEvaluator") == 0) {
+        ASTNode *ifBodyBlock = node->left;
+        ASTNode *elseBodyBlock = node->right;
+
+        // Trace Left Branch (Unpack inner statement and label the block box as
+        // [ true ])
+        if (ifBodyBlock != NULL && ifBodyBlock->childCount > 0) {
+            leftArm = ifBodyBlock->children[0];
+
+            int slashCol = col - (spacing / 2);
+            if (slashCol >= 0 && slashCol < CANVAS_COLS)
+                canvas[row + 1][slashCol] = '/';
+
+            // 🔍 FIX: Pass "[ true ]" string override parameter to clear out
+            // the [ = ] label!
+            DrawNodesOnCanvas(leftArm, canvas, row + 2, col - spacing,
+                              (spacing / 2 == 0) ? 1 : spacing / 2, "[ true ]");
+        }
+
+        // Trace Right Branch (Unpack inner statement and label the block box as
+        // [ false ])
+        if (elseBodyBlock != NULL && elseBodyBlock->childCount > 0) {
+            rightArm = elseBodyBlock->children[0];
+
+            int backslashCol = col + (spacing / 2);
+            if (backslashCol >= 0 && backslashCol < CANVAS_COLS)
+                canvas[row + 1][backslashCol] = '\\';
+
+            // 🔍 FIX: Pass "[ false ]" string override parameter to clear out
+            // the [ = ] label!
+            DrawNodesOnCanvas(rightArm, canvas, row + 2, col + spacing,
+                              (spacing / 2 == 0) ? 1 : spacing / 2,
+                              "[ false ]");
+        }
+
+        return; // Exit early since sub-branches are manually mapped and
+                // explicitly overridden
+    }
+
+    // 3. GENERAL FALLBACK ROUTING PATHS (For arithmetic chains and assignment
+    // operations)
     if (leftArm != NULL) {
         int slashCol = col - (spacing / 2);
         if (slashCol >= 0 && slashCol < CANVAS_COLS) {
             canvas[row + 1][slashCol] = '/';
         }
         DrawNodesOnCanvas(leftArm, canvas, row + 2, col - spacing,
-                          (spacing / 2 == 0) ? 1 : spacing / 2);
+                          (spacing / 2 == 0) ? 1 : spacing / 2, NULL);
     }
     if (rightArm != NULL) {
         int backslashCol = col + (spacing / 2);
@@ -93,11 +156,11 @@ static void DrawNodesOnCanvas(ASTNode *node,
             canvas[row + 1][backslashCol] = '\\';
         }
         DrawNodesOnCanvas(rightArm, canvas, row + 2, col + spacing,
-                          (spacing / 2 == 0) ? 1 : spacing / 2);
+                          (spacing / 2 == 0) ? 1 : spacing / 2, NULL);
     }
 }
 
-// 🏁 Master Function called from your main file
+// 🏁 Master Interface Function called from main.c
 void PrintAST(ASTNode *root) {
     if (root == NULL)
         return;
@@ -106,13 +169,14 @@ void PrintAST(ASTNode *root) {
         printf("\n--- Abstract Syntax Tree Diagram Canvas ---\n");
         for (int i = 0; i < root->childCount; i++) {
             char canvas[CANVAS_ROWS][CANVAS_COLS];
-            memset(canvas, ' ', sizeof(canvas)); // Clear board with spaces
+            memset(canvas, ' ', sizeof(canvas)); // Reset grid spaces completely
 
-            // Plot the node structures from center column row 0
-            DrawNodesOnCanvas(root->children[i], canvas, 0, CANVAS_COLS / 2,
-                              14);
+            // Load and plot child elements starting from coordinates 0, center
+            // with no override
+            DrawNodesOnCanvas(root->children[i], canvas, 0, CANVAS_COLS / 2, 20,
+                              NULL);
 
-            // Find max active height row boundary
+            // Compute dynamic height bounds to hide trailing empty lines
             int maxRowWithContent = 0;
             for (int r = CANVAS_ROWS - 1; r >= 0; r--) {
                 for (int c = 0; c < CANVAS_COLS; c++) {
@@ -125,7 +189,8 @@ void PrintAST(ASTNode *root) {
                     break;
             }
 
-            // Print the populated grid map out to the screen
+            // Flush out the active populated matrix rows to screen terminal
+            // canvas
             for (int r = 0; r <= maxRowWithContent; r++) {
                 int endCol = CANVAS_COLS - 1;
                 while (endCol >= 0 && canvas[r][endCol] == ' ')

@@ -19,6 +19,7 @@ int EvaluateNodesInt(ASTNode *nodes);
 char *EvaluateNodesChar(ASTNode *nodes);
 void SetIntVar(char *name, int value);
 
+int EvaluateNodesComp(ASTNode *nodes);
 void PrintVariableRegistry();
 Variable GetVar(char *name);
 

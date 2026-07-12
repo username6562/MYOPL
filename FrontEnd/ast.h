@@ -14,7 +14,12 @@ typedef enum {
     BlockNode,
     UnknownNode,
     StringNode,
-    BoolNode
+    BoolNode,
+    IfNode,
+    ElseNode,
+    GreaterThanNode,
+    LessThanNode,
+    EqualsToNode
 } NodeType;
 typedef struct ASTNode ASTNode;
 
@@ -28,5 +33,6 @@ struct ASTNode {
 };
 ASTNode *CreateNode(NodeType type, const char *value);
 
+void PrintAST(ASTNode *node);
 void PrintASTASCII(ASTNode *node);
 #endif
