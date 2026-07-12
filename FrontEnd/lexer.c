@@ -90,8 +90,6 @@ Token GetToken(FILE *file) {
         printf("Error couldn't open file\n");
     }
 
-    int tokenCount = 0;
-
     int ch = fgetc(file);
 
     while (ch != EOF) {
@@ -102,78 +100,81 @@ Token GetToken(FILE *file) {
 
         char lexerBuffer[MAXTOKENLEN] = "";
         int bufferIndex = 0;
-        if (isdigit(ch)) {
-            while (isdigit(ch)) {
-                lexerBuffer[bufferIndex++] = ch;
-                ch = fgetc(file);
-            }
 
-            lexerBuffer[bufferIndex] = '\0';
-            ungetc(ch, file);
-            return Tokenize(lexerBuffer, false);
-        } else if (ch == '+' || ch == '(' || ch == ')' || ch == '-' ||
-                   ch == ';') {
+        switch (ch) {
+        case '+':
+        case '-':
+        case '/':
+        case '*':
+        case '(':
+        case ')':
+        case '{':
+        case '}':
+        case ';':
             lexerBuffer[0] = ch;
             lexerBuffer[1] = '\0';
+            return Tokenize(lexerBuffer, false);
+
+        case '=': {
             ch = fgetc(file);
-            ungetc(ch, file);
-            return Tokenize(lexerBuffer, false);
-        } else if (isalpha(ch)) {
-            while (isalpha(ch)) {
-                lexerBuffer[bufferIndex++] = ch;
-                ch = fgetc(file);
-            }
-            lexerBuffer[bufferIndex] = '\0';
-            ungetc(ch, file);
 
-            return Tokenize(lexerBuffer, false);
-        } else if (ch == '=') {
-            int nextCh = fgetc(file);
-
-            if (nextCh == '=') {
+            if (ch == '=') {
                 Token tok;
                 tok.type = ComparisonOpToken;
                 strcpy(tok.value, "==");
 
                 return tok;
             } else {
-                ungetc(nextCh, file);
+                ungetc(ch, file);
+
                 Token tok;
-
                 tok.type = EqualsToken;
-                strcpy(tok.value, "=");
 
+                strcpy(tok.value, "=");
                 return tok;
             }
-
         }
-
-        else if (ch == '\'' || ch == '\"') {
+        case '\'':
+        case '"': {
             char quote = ch;
             ch = fgetc(file);
-            while (ch != quote && ch != EOF) {
+
+            while (ch != quote || ch != EOF) {
                 lexerBuffer[bufferIndex++] = ch;
                 ch = fgetc(file);
             }
-
             lexerBuffer[bufferIndex] = '\0';
-            if (ch == quote) {
-                ch = fgetc(file);
-            }
-            ungetc(ch, file);
+
             return Tokenize(lexerBuffer, true);
         }
 
-        else {
-            lexerBuffer[0] = ch;
-            lexerBuffer[1] = '\0';
-            ch = fgetc(file);
-            ungetc(ch, file);
-            return Tokenize(lexerBuffer, false);
-        }
-        tokenCount++;
-    }
+        default:
+            if (isdigit(ch)) {
+                while (isdigit(ch)) {
+                    lexerBuffer[bufferIndex++] = ch;
+                    ch = fgetc(file);
+                }
+                lexerBuffer[bufferIndex] = '\0';
+                ungetc(ch, file);
 
+                return Tokenize(lexerBuffer, false);
+            } else if (isalpha(ch)) {
+                while (isalpha(ch)) {
+                    lexerBuffer[bufferIndex++] = ch;
+                    ch = fgetc(file);
+                }
+                lexerBuffer[bufferIndex] = '\0';
+
+                ungetc(ch, file);
+                return Tokenize(lexerBuffer, false);
+            } else {
+                lexerBuffer[0] = ch;
+                lexerBuffer[1] = '\0';
+
+                return Tokenize(lexerBuffer, false);
+            }
+        }
+    }
     Token eofToken;
     eofToken.type = EOFToken;
     eofToken.value[0] = '\0';
