@@ -230,6 +230,97 @@ ASTNode *ParseStatement(FILE *file) {
         }
     }
 
+    if (token.type == ElifToken) {
+        ConsumeToken(file);
+
+        ASTNode *elif_node = CreateNode(IfNode, "if");
+        ASTNode *conditionEvalNode =
+            CreateNode(BlockNode, "ConditionEvaluator");
+
+        conditionEvalNode->right = NULL;
+        elif_node->right = conditionEvalNode;
+
+        Token openParenToken = PeekToken(file);
+
+        if (openParenToken.type == OpenParenthesisToken) {
+            ConsumeToken(file);
+
+            ASTNode *conditionExpr = ParseExpression(file, 0);
+            elif_node->left = conditionExpr;
+            Token closeParenToken = PeekToken(file);
+
+            if (closeParenToken.type == CloseParenthesisToken) {
+                ConsumeToken(file);
+                Token openCurlyTok = PeekToken(file);
+
+                if (openCurlyTok.type == OpenCurlyBracket) {
+                    ConsumeToken(file);
+                    ASTNode *elifNode = CreateNode(BlockNode, "elif");
+
+                    conditionEvalNode->left = elifNode;
+                    while (true) {
+                        Token lineTok = PeekToken(file);
+
+                        if (lineTok.type == CloseCurlyBracket ||
+                            lineTok.type == EOFToken) {
+                            break;
+                        }
+
+                        ASTNode *currentLine = ParseStatement(file);
+
+                        if (currentLine != NULL) {
+                            elifNode->children[elifNode->childCount] =
+                                currentLine;
+                            elifNode->childCount++;
+                        } else {
+                            ConsumeToken(file);
+                        }
+                    }
+                    ConsumeToken(file);
+
+                    Token checkElseToken = PeekToken(file);
+
+                    if (checkElseToken.type == ElseToken) {
+                        ConsumeToken(file);
+
+                        ASTNode *elseNode = CreateNode(BlockNode, "else");
+
+                        Token openCurlyTok = PeekToken(file);
+
+                        if (openCurlyTok.type == OpenCurlyBracket) {
+                            ConsumeToken(file);
+
+                            while (true) {
+                                Token lineTok = PeekToken(file);
+
+                                if (lineTok.type == CloseCurlyBracket ||
+                                    lineTok.type == EOFToken) {
+                                    break;
+                                }
+
+                                ASTNode *currentLine = ParseStatement(file);
+
+                                if (currentLine != NULL) {
+                                    elseNode->children[elseNode->childCount] =
+                                        currentLine;
+                                    elseNode->childCount++;
+                                } else {
+                                    ConsumeToken(file);
+                                }
+                            }
+                            ConsumeToken(file);
+                        }
+                        conditionEvalNode->right = elseNode;
+                    }
+                    elif_node->left = conditionExpr;
+                    elif_node->right = conditionEvalNode;
+
+                    return elif_node;
+                }
+            }
+        }
+    }
+
     if (token.type == KeyWordToken && (strcmp(token.value, "int") == 0 ||
                                        strcmp(token.value, "string") == 0 ||
                                        strcmp(token.value, "bool") == 0)) {
