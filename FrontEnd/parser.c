@@ -3,6 +3,7 @@
 #include "lexer.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static Token token;
@@ -139,7 +140,7 @@ ASTNode *ParseExpression(FILE *file, int currentBindingPower) {
     return left;
 }
 
-ASTNode *ParseStatement(FILE *file) {
+ASTNode *ParseStatement(FILE *file, bool isExpectingElif) {
 
     Token token = PeekToken(file);
 
@@ -177,7 +178,7 @@ ASTNode *ParseStatement(FILE *file) {
                             break;
                         }
 
-                        ASTNode *currentLine = ParseStatement(file);
+                        ASTNode *currentLine = ParseStatement(file, false);
 
                         if (currentLine != NULL) {
                             ifNode->children[ifNode->childCount] = currentLine;
@@ -189,9 +190,14 @@ ASTNode *ParseStatement(FILE *file) {
                     }
                     ConsumeToken(file);
 
-                    Token checkElseToken = PeekToken(file);
+                    Token nextToken = PeekToken(file);
 
-                    if (checkElseToken.type == ElseToken) {
+                    if (nextToken.type == ElifToken) {
+                        ASTNode *elifNode = ParseStatement(file, true);
+                        return elifNode;
+                    }
+
+                    else if (nextToken.type == ElseToken) {
                         ConsumeToken(file);
                         ASTNode *elseNode = CreateNode(BlockNode, "else");
                         conditionEvalNode->right = elseNode;
@@ -207,7 +213,8 @@ ASTNode *ParseStatement(FILE *file) {
                                     break;
                                 }
 
-                                ASTNode *currentLine = ParseStatement(file);
+                                ASTNode *currentLine =
+                                    ParseStatement(file, false);
 
                                 if (currentLine != NULL) {
                                     elseNode->children[elseNode->childCount] =
@@ -231,6 +238,14 @@ ASTNode *ParseStatement(FILE *file) {
     }
 
     if (token.type == ElifToken) {
+
+        if (isExpectingElif == false) {
+            printf("Syntax Error : Cannot Make An Elif Block without an If "
+                   "block\n");
+            exit(269);
+
+            return NULL;
+        }
         ConsumeToken(file);
 
         ASTNode *elif_node = CreateNode(IfNode, "if");
@@ -266,7 +281,7 @@ ASTNode *ParseStatement(FILE *file) {
                             break;
                         }
 
-                        ASTNode *currentLine = ParseStatement(file);
+                        ASTNode *currentLine = ParseStatement(file, false);
 
                         if (currentLine != NULL) {
                             elifNode->children[elifNode->childCount] =
@@ -298,7 +313,8 @@ ASTNode *ParseStatement(FILE *file) {
                                     break;
                                 }
 
-                                ASTNode *currentLine = ParseStatement(file);
+                                ASTNode *currentLine =
+                                    ParseStatement(file, false);
 
                                 if (currentLine != NULL) {
                                     elseNode->children[elseNode->childCount] =
@@ -391,12 +407,10 @@ ASTNode *Parse(FILE *file) {
 
     while (true) {
         Token t = PeekToken(file);
-        // printf("Token name %s , Token type %d\n", t.value, t.type);
-        // 3. Stop signal: If we hit the absolute end of the file, break!
         if (t.type == EOFToken) {
             break;
         }
-        ASTNode *currentLine = ParseStatement(file);
+        ASTNode *currentLine = ParseStatement(file, false);
         if (currentLine != NULL) {
             programRoot->children[programRoot->childCount] = currentLine;
             programRoot->childCount++;
