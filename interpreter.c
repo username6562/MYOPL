@@ -64,6 +64,10 @@ void PrintVariableRegistry() {
 }
 
 int EvaluateNodesInt(ASTNode *nodes) {
+
+    if (nodes == NULL) {
+        return 0;
+    }
     if (nodes->type == BlockNode) {
         int lastLineResult = 0;
 
@@ -83,6 +87,9 @@ int EvaluateNodesInt(ASTNode *nodes) {
             return savedVal.boolVal;
         }
         return savedVal.intVal;
+    }
+    if (nodes->type == BoolNode) {
+        return EvaluateNodesBool(nodes);
     }
     if (nodes->type == AddNode) {
         return EvaluateNodesInt(nodes->left) + EvaluateNodesInt(nodes->right);
@@ -106,15 +113,13 @@ int EvaluateNodesInt(ASTNode *nodes) {
         int condition = EvaluateNodesInt(nodes->left);
 
         ASTNode *conditionEval = nodes->right;
-        if (condition == 1) {
-            int result = EvaluateNodesInt(conditionEval->left);
-
-            return result;
-        } else {
-            int result = EvaluateNodesInt(conditionEval->right);
-
-            return result;
+        if (condition != 0) {
+            return EvaluateNodesInt(conditionEval->left);
+        } else if (conditionEval != NULL && conditionEval->right != NULL) {
+            return EvaluateNodesInt(conditionEval->right);
         }
+
+        return 0;
     }
 
     if (nodes->type == AssignmentOpNode) {
