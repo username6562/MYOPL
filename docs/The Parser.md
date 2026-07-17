@@ -113,3 +113,6 @@ Copy 2 enters it's own `while(true)` loop
 - It makes the check if 20 is greater than 30 which is false so code doesn't break
 - It consumes `*` token and makes aa `MultiplyNode`
 - Then it gets it right side with the `ParseExpression` and then return 5 and the right
+
+
+# `ParseStatement` Function

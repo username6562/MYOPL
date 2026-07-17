@@ -1,5 +1,5 @@
-#include "interpreter.h"
-#include "FrontEnd/ast.h"
+#include "../include/interpreter.h"
+#include "../include/ast.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -266,3 +266,5 @@ Variable GetVar(char *name) {
     printf("Variable Name wasn't %s found  \n", name);
     return (Variable){0};
 }
+
+void EvaluateNodeFunc(ASTNode nodes) {}

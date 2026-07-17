@@ -1,15 +1,13 @@
-#include "FrontEnd/ast.h"
-#include "FrontEnd/parser.h"
-#include "interpreter.h"
+#include "../include/ast.h"
+#include "../include/interpreter.h"
+#include "../include/parser.h"
 #include <stdbool.h>
 #include <stdio.h>
 #define MAXTOKEN 1000
-
-int main() {
+int main(void) {
     FILE *file = fopen("source.txt", "r");
     ASTNode *node = Parse(file);
     EvaluateNodesInt(node);
     PrintVariableRegistry();
-    // PrintAST(node);
     fclose(file);
 }

@@ -4,11 +4,11 @@ CC = gcc
 SRC = *.c FrontEnd/*.c
 OUT = myopl.exe
 
-CFLAGS = -Wall -Wextra -std=c99 
+CFLAGS = -Wall -Wextra  -Werror -std=c99 
 LIBS = -lraylib -lopengl32 -lgdi32 -lwinmm
 all: build run
 build:
-	$(CC) $(CFLAGS)  $(SRC)  -o $(OUT) 
+	$(CC) $(CFLAGS)  $(SRC)  -o $(OUT)  
 
 run:
 	./$(OUT)

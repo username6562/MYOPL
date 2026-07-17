@@ -1,4 +1,4 @@
-#include "lexer.h"
+#include "../include/lexer.h"
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -22,6 +22,7 @@ Token Tokenize(char string[MAXTOKENLEN], bool isString) {
     strncpy(t.value, string, MAXTOKENLEN - 1);
     t.value[MAXTOKENLEN - 1] = '\0';
     static bool expectingIdentifier;
+    static bool expectingFunction = false;
 
     if (isString) {
         t.type = StringToken;
@@ -30,54 +31,78 @@ Token Tokenize(char string[MAXTOKENLEN], bool isString) {
     } else if (strcmp(t.value, "+") == 0) {
         t.type = BinaryOpToken;
         expectingIdentifier = false;
+        expectingFunction = false;
     }
 
     else if (strcmp(t.value, "=") == 0) {
         t.type = EqualsToken;
         expectingIdentifier = false;
+        expectingFunction = false;
     } else if (strcmp(t.value, "-") == 0 || strcmp(t.value, "*") == 0 ||
                strcmp(t.value, "/") == 0) {
         t.type = BinaryOpToken;
         expectingIdentifier = false;
+        expectingFunction = false;
     } else if (isInteger(t.value)) {
         t.type = IntToken;
         expectingIdentifier = false;
+        expectingFunction = false;
     } else if (strcmp(t.value, "int") == 0 || strcmp(t.value, "string") == 0 ||
                strcmp(t.value, "bool") == 0) {
         t.type = KeyWordToken;
         expectingIdentifier = true;
+        expectingFunction = false;
     } else if (expectingIdentifier && isalpha(t.value[0])) {
         t.type = IdentifierToken;
         expectingIdentifier = false;
+        expectingFunction = false;
     } else if (strcmp(t.value, "true") == 0 || strcmp(t.value, "false") == 0) {
         t.type = BoolToken;
         expectingIdentifier = false;
+        expectingFunction = false;
     } else if (strcmp(t.value, "if") == 0) {
         t.type = IfToken;
         expectingIdentifier = false;
+        expectingFunction = false;
 
     } else if (strcmp(t.value, "(") == 0) {
         t.type = OpenParenthesisToken;
         expectingIdentifier = false;
+        expectingFunction = false;
     } else if (strcmp(t.value, ")") == 0) {
         t.type = CloseParenthesisToken;
         expectingIdentifier = false;
+        expectingFunction = false;
     } else if (strcmp(t.value, ";") == 0) {
         t.type = SemiColonToken;
         expectingIdentifier = false;
+        expectingFunction = false;
     } else if (strcmp(t.value, "{") == 0) {
         t.type = OpenCurlyBracket;
+        expectingFunction = false;
     } else if (strcmp(t.value, "}") == 0) {
         t.type = CloseCurlyBracket;
+        expectingFunction = false;
     } else if (strcmp(t.value, "else") == 0) {
         t.type = ElseToken;
+        expectingFunction = false;
     } else if (strcmp(t.value, "==") == 0 || strcmp(t.value, "<") == 0 ||
                strcmp(t.value, ">") == 0 || strcmp(t.value, "<=") == 0 ||
                strcmp(t.value, ">=") == 0) {
         t.type = ComparisonOpToken;
-    }
+        expectingIdentifier = false;
+        expectingFunction = false;
+    } else if (strcmp(t.value, "elif") == 0) {
+        t.type = ElifToken;
+        expectingIdentifier = false;
+        expectingFunction = false;
+    } else if (strcmp(t.value, "func") == 0) {
+        t.type = KeyWordToken;
+        expectingFunction = true;
 
-    else {
+    } else if (isalpha(t.value[0]) && expectingFunction == true) {
+        t.type = FunctionDeclToken;
+    } else {
         t.type = IdentifierToken;
     }
 
@@ -134,6 +159,45 @@ Token GetToken(FILE *file) {
                 return tok;
             }
         }
+        case '<': {
+            ch = fgetc(file);
+
+            if (ch == '=') {
+                Token tok;
+                tok.type = ComparisonOpToken;
+
+                strcpy(tok.value, "<=");
+                return tok;
+            } else {
+                ungetc(ch, file);
+
+                Token tok;
+                tok.type = ComparisonOpToken;
+
+                strcpy(tok.value, "<");
+                return tok;
+            }
+        }
+        case '>': {
+            ch = fgetc(file);
+
+            if (ch == '=') {
+                Token tok;
+                tok.type = ComparisonOpToken;
+
+                strcpy(tok.value, ">=");
+                return tok;
+            } else {
+                ungetc(ch, file);
+
+                Token tok;
+                tok.type = ComparisonOpToken;
+
+                strcpy(tok.value, ">");
+                return tok;
+            }
+        }
+
         case '\'':
         case '"': {
             char quote = ch;

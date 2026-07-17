@@ -8,4 +8,5 @@
 ASTNode *Parse(FILE *file);
 Token PeekToken(FILE *file);
 ASTNode *ParsePrimary(FILE *file);
+
 #endif // PARSER_H;

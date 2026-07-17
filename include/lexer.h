@@ -18,10 +18,12 @@ typedef enum {
     StringToken,
     BoolToken,
     IfToken,
+    ElifToken,
     ElseToken,
     OpenCurlyBracket,
     CloseCurlyBracket,
-    ComparisonOpToken
+    ComparisonOpToken,
+    FunctionDeclToken
 } TokenType;
 
 typedef struct {

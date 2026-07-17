@@ -19,7 +19,10 @@ typedef enum {
     ElseNode,
     GreaterThanNode,
     LessThanNode,
-    EqualsToNode
+    EqualsToNode,
+    LessThanOrEqualsNode,
+    GreaterThanOrEqualsNode,
+    FunctionDeclNode
 } NodeType;
 typedef struct ASTNode ASTNode;
 

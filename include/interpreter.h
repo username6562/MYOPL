@@ -1,7 +1,7 @@
 #ifndef INTERPRETER_H
 #define INTERPRETER_H
 
-#include "FrontEnd/ast.h"
+#include "../include/ast.h"
 
 typedef enum { Integer, String, Boolean } VariableTypes;
 typedef struct {
