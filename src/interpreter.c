@@ -266,5 +266,3 @@ Variable GetVar(char *name) {
     printf("Variable Name wasn't %s found  \n", name);
     return (Variable){0};
 }
-
-void EvaluateNodeFunc(ASTNode nodes) {}
